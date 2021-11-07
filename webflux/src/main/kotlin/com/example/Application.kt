@@ -32,6 +32,10 @@ open class Controller(
     open fun task() = longTaskService.getResult()
         .map { TaskResponse(it) }
         .defaultIfEmpty(TaskResponse(null))
+
+    @GetMapping("/task2")
+    open suspend fun task2() =
+        TaskResponse(data = longTaskService.getResult2())
 }
 
 @Service
@@ -45,6 +49,16 @@ class LongTaskService {
             Mono.just(Random.nextInt(10))
         } else {
             Mono.empty()
+        }
+    }
+
+    suspend fun getResult2(): Int? {
+        delay(10000)
+
+        return if (Random.nextBoolean()) {
+            Random.nextInt(10)
+        } else {
+            null
         }
     }
 }
