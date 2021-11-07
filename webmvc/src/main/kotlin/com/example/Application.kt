@@ -27,6 +27,9 @@ open class Controller(
     @GetMapping("/test")
     open fun test() = TestResponse()
 
+    /**
+     * WebMVC API endpoint executing a long-running task (simulated by just delaying the function).
+     */
     @GetMapping("/task")
     open fun task() = TaskResponse(data = longTaskService.getResult())
 }

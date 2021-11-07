@@ -28,11 +28,19 @@ open class Controller(
     @GetMapping("/test")
     open fun test() = TestResponse()
 
+    /**
+     * WebFlux API endpoint executing a long-running task (simulated by just delaying the function).
+     * This function blocks the worker thread, which prevents other threads from handling another requests.
+     */
     @GetMapping("/task")
     open fun task() = longTaskService.getResult()
         .map { TaskResponse(it) }
         .defaultIfEmpty(TaskResponse(null))
 
+    /**
+     * Suspending WebFlux API endpoint executing a long-running task (simulated by just delaying the function).
+     * Just using suspending functions can prevent worker thread from getting blocked.
+     */
     @GetMapping("/task2")
     open suspend fun task2() =
         TaskResponse(data = longTaskService.getResult2())
