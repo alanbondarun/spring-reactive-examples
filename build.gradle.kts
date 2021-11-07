@@ -1,6 +1,10 @@
 subprojects {
     val ktlint by configurations.creating
 
+    repositories {
+        mavenCentral()
+    }
+
     dependencies {
         ktlint("com.pinterest:ktlint:0.43.0")
     }
