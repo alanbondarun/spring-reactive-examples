@@ -1,11 +1,15 @@
 package com.example
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.runBlocking
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Mono
 import kotlin.random.Random
@@ -21,12 +25,32 @@ open class Controller(
         val data: String = "Hello",
     )
 
+    data class Person(
+        val name: String,
+        val age: Int,
+    )
+
     data class TaskResponse(
         val data: Int?,
     )
 
     @GetMapping("/test")
     open fun test() = TestResponse()
+
+    /**
+     * Request handler which accepts the request body as a Flow.
+     * When given a request body as a JSON array, Spring automatically feeds the body after transforming it to a Flow.
+     */
+    @PostMapping("/test/_batch")
+    open suspend fun batchTest(@RequestBody persons: Flow<Person>): TestResponse =
+        TestResponse(
+            data = "Hello" +
+                persons
+                    .fold("") { accumulator, value ->
+                        "$accumulator, ${value.name}"
+                    } +
+                "!"
+        )
 
     /**
      * WebFlux API endpoint executing a long-running task (simulated by just delaying the function).

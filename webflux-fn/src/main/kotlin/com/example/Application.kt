@@ -1,6 +1,7 @@
 package com.example
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.fold
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.server.RouterFunction
 import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.function.server.ServerResponse
+import org.springframework.web.reactive.function.server.bodyToFlow
 import org.springframework.web.reactive.function.server.bodyValueAndAwait
 import org.springframework.web.reactive.function.server.buildAndAwait
 import org.springframework.web.reactive.function.server.coRouter
@@ -26,6 +28,7 @@ open class Application(
                 GET("", handler::test)
                 GET("/{name}", handler::testWithName)
                 GET("/_exception/{name}", handler::testWithException)
+                POST("/_batch", handler::batchTest)
                 onError<InvalidNameException> { exception, _ ->
                     ServerResponse.badRequest()
                         .json()
@@ -46,6 +49,11 @@ class Handler(
         val data: String = "Hello",
     )
 
+    data class Person(
+        val name: String,
+        val age: Int,
+    )
+
     data class TaskResponse(
         val data: Int?,
     )
@@ -62,7 +70,24 @@ class Handler(
             .bodyValueAndAwait(TestResponse("Hello, $name"))
     }
 
-    // TODO: Batch API which communicates with Flux/Flow
+    /**
+     * Request handler which accepts the request body as a Flow.
+     * When given a request body as a JSON array, this handler parses the body to desired data classes.
+     */
+    suspend fun batchTest(request: ServerRequest): ServerResponse {
+        return ServerResponse.ok()
+            .json()
+            .bodyValueAndAwait(
+                TestResponse(
+                    data = "Hello" +
+                        request.bodyToFlow<Person>()
+                            .fold("") { accumulator, value ->
+                                "$accumulator, ${value.name}"
+                            } +
+                        "!"
+                )
+            )
+    }
 
     /**
      * Request handler which may throw an exception.
