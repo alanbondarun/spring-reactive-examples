@@ -15,6 +15,8 @@ import org.springframework.web.reactive.function.server.bodyValueAndAwait
 import org.springframework.web.reactive.function.server.buildAndAwait
 import org.springframework.web.reactive.function.server.coRouter
 import org.springframework.web.reactive.function.server.json
+import org.springframework.web.reactive.function.server.plus
+import org.springframework.web.reactive.function.server.router
 import kotlin.random.Random
 
 @SpringBootApplication
@@ -22,8 +24,10 @@ open class Application(
     private val handler: Handler,
 ) {
     @Bean
-    open fun router(): RouterFunction<*> =
-        coRouter {
+    open fun routerFunction(): RouterFunction<*> =
+        router {
+            GET("/test-mono", testHandler)
+        } + coRouter {
             "/test".nest {
                 GET("", handler::test)
                 GET("/{name}", handler::testWithName)
@@ -41,6 +45,17 @@ open class Application(
         }
 }
 
+/**
+ * Request handler defined as a function.
+ * In Java, this can be done by implementing HandlerFunction interface.
+ */
+val testHandler = { _: ServerRequest ->
+    ServerResponse.ok()
+        .json()
+        .bodyValue(Handler.TestResponse())
+}
+
+// @Controller annotation is needed for Spring IoC Container to discover this class
 @Controller
 class Handler(
     private val longTaskService: LongTaskService,
